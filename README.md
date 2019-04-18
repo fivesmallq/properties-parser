@@ -20,7 +20,7 @@ To add a dependency on simple-properties using Maven, use the following:
 <dependency>
     <groupId>im.nll.data</groupId>
     <artifactId>simple-properties</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -28,14 +28,18 @@ To add a dependency using Gradle:
 
 ```
 dependencies {
-  compile 'im.nll.data:simple-properties:0.9.0-SNAPSHOT'
+  compile 'im.nll.data:simple-properties:0.9.0'
 }
 ```
 
 
 # Examples
 
-TODO
+```java
+  SimpleProperties props = SimpleProperties.readConfiguration("system.properties");
+  Assert.assertEquals("https://github.com/fivesmallq/simple-properties", props.getStringProperty("base_url"));
+  Assert.assertEquals("UTF-8", props.getStringProperty("MYSQL_CHARSET"));
+```
 
 # Contributing
 
