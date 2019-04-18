@@ -1,5 +1,6 @@
 package im.nll.data.config;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Properties;
@@ -12,8 +13,11 @@ import java.util.Properties;
 public class SimplePropertiesTest {
     @Test
     public void readConfTest() {
-        SimpleProperties simpleProperties = SimpleProperties.readConfiguration("redis.properties");
-        Properties configuration = simpleProperties.getUnderlyingProperties();
+        SimpleProperties props = SimpleProperties.readConfiguration("system.properties");
+        Properties configuration = props.getUnderlyingProperties();
         System.out.println(configuration);
+        Assert.assertEquals("https://github.com/fivesmallq/simple-properties", props.getStringProperty("base_url"));
+        Assert.assertEquals("UTF-8", props.getStringProperty("MYSQL_CHARSET"));
+        Assert.assertEquals("中文测试", props.getStringProperty("test.zh"));
     }
 }
