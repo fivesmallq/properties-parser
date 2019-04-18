@@ -121,7 +121,7 @@ public class SimpleProperties {
      * @param is Stream to properties file
      * @return The Properties object
      */
-    public static Properties readUtf8Properties(InputStream is) {
+    private static Properties readUtf8Properties(InputStream is) {
         Properties properties = new OrderSafeProperties();
         try {
             properties.load(is);
@@ -493,7 +493,7 @@ public class SimpleProperties {
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
 
-    public static String escapeJava(String str) {
+    private static String escapeJava(String str) {
         return escapeJavaStyleString(str, false, false);
     }
 
@@ -597,16 +597,16 @@ public class SimpleProperties {
         return Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
     }
 
-    public static List<String> readLines(final InputStream input, final String encoding) throws IOException {
+    private static List<String> readLines(final InputStream input, final String encoding) throws IOException {
         return readLines(input, Charset.forName(encoding));
     }
 
-    public static List<String> readLines(final InputStream input, final Charset encoding) throws IOException {
+    private static List<String> readLines(final InputStream input, final Charset encoding) throws IOException {
         final InputStreamReader reader = new InputStreamReader(input, encoding);
         return readLines(reader);
     }
 
-    public static List<String> readLines(final Reader input) throws IOException {
+    private static List<String> readLines(final Reader input) throws IOException {
         final BufferedReader reader = toBufferedReader(input);
         final List<String> list = new ArrayList<>();
         String line = reader.readLine();
@@ -617,11 +617,11 @@ public class SimpleProperties {
         return list;
     }
 
-    public static BufferedReader toBufferedReader(final Reader reader) {
+    private static BufferedReader toBufferedReader(final Reader reader) {
         return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
-    public static void closeQuietly(final Closeable closeable) {
+    private static void closeQuietly(final Closeable closeable) {
         try {
             if (closeable != null) {
                 closeable.close();
@@ -631,7 +631,7 @@ public class SimpleProperties {
         }
     }
 
-    static class OrderSafeProperties extends java.util.Properties {
+    private static class OrderSafeProperties extends java.util.Properties {
 
         // set used to preserve key order
         private final LinkedHashSet<Object> keys = new LinkedHashSet<>();
