@@ -106,7 +106,7 @@ public class SimpleProperties {
                     String filenameToInclude = propsFromFile.getProperty(key.toString());
                     toInclude.putAll(readOneConfigurationFile(filenameToInclude));
                 } catch (Exception ex) {
-                    System.err.println("Missing include: " + key);
+                    System.err.println("Missing include: " + key + " Cause:" + ex.getMessage());
                 }
             }
         }
