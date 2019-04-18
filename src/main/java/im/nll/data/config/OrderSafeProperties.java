@@ -1,7 +1,6 @@
 package im.nll.data.config;
 
 
-import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,9 +21,8 @@ public class OrderSafeProperties extends java.util.Properties {
     public void load(InputStream inputStream) throws IOException {
 
         // read all lines from file as utf-8
-        List<String> lines = IOUtils.readLines(inputStream, "utf-8");
-        IOUtils.closeQuietly(inputStream);
-
+        List<String> lines = Helpers.readLines(inputStream, "utf-8");
+        Helpers.closeQuietly(inputStream);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         // escape "special-chars" (to utf-16 on the format \\uxxxx) in lines and store as iso-8859-1
         // see info about escaping - http://download.oracle.com/javase/1.5.0/docs/api/java/util/Properties.html - "public void load(InputStream inStream)"
@@ -34,15 +32,16 @@ public class OrderSafeProperties extends java.util.Properties {
             // by a backslash still yield single and double quote characters, respectively."
             // we must transform \" => " and \' => ' before escaping to prevent escaping the backslash
             line = line.replaceAll("\\\\\"", "\"").replaceAll("(^|[^\\\\])(\\\\')", "$1'");
-            
-            String escapedLine = StringEscapeUtils.escapeJava( line ) + "\n";
+
+            String escapedLine = Helpers.escapeJava(line) + "\n";
             // remove escaped backslashes
-            escapedLine = escapedLine.replaceAll("\\\\\\\\","\\\\");
-            out.write( escapedLine.getBytes("iso-8859-1"));
+            escapedLine = escapedLine.replaceAll("\\\\\\\\", "\\\\");
+            out.write(escapedLine.getBytes("iso-8859-1"));
         }
 
         // read properties-file with regular java.util.Properties impl
-        super.load( new ByteArrayInputStream( out.toByteArray()) );
+        super.load(new ByteArrayInputStream(out.toByteArray()));
+
     }
 
     @Override

@@ -1,47 +1,18 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package im.nll.data.config;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-
 /**
- * <p>Escapes and unescapes <code>String</code>s for
- * Java, Java Script, HTML, XML, and SQL.</p>
- *
- * <p>#ThreadSafe#</p>
- * @author Apache Software Foundation
- * @author Apache Jakarta Turbine
- * @author Purple Technology
- * @author <a href="mailto:alex@purpletech.com">Alexander Day Chaffee</a>
- * @author Antony Riley
- * @author Helge Tesgaard
- * @author <a href="sean@boohai.com">Sean Brown</a>
- * @author <a href="mailto:ggregory@seagullsw.com">Gary Gregory</a>
- * @author Phil Steitz
- * @author Pete Gieser
- * @since 2.0
- * @version $Id: StringEscapeUtils.java 1057072 2011-01-10 01:55:57Z niallp $
+ * @author <a href="mailto:fivesmallq@gmail.com">fivesmallq</a>
+ * @version Revision: 1.0
+ * @date 2019/4/18 2:59 PM
  */
-public class StringEscapeUtils {
-
+public class Helpers {
     /**
      * <p><code>StringEscapeUtils</code> instances should NOT be constructed in
      * standard programming.</p>
@@ -52,8 +23,8 @@ public class StringEscapeUtils {
      * <p>This constructor is public to permit tools that require a JavaBean
      * instance to operate.</p>
      */
-    public StringEscapeUtils() {
-      super();
+    public Helpers() {
+        super();
     }
 
     // Java and JavaScript
@@ -86,9 +57,9 @@ public class StringEscapeUtils {
     /**
      * <p>Escapes the characters in a <code>String</code> using Java String rules to
      * a <code>Writer</code>.</p>
-     * 
+     *
      * <p>A <code>null</code> string input has no effect.</p>
-     * 
+     *
      * @see #escapeJava(java.lang.String)
      * @param out  Writer to write escaped string into
      * @param str  String to escape values in, may be null
@@ -142,7 +113,7 @@ public class StringEscapeUtils {
 
     /**
      * <p>Worker method for the {@link #escapeJavaScript(String)} method.</p>
-     * 
+     *
      * @param str String to escape values in, may be null
      * @param escapeSingleQuotes escapes single quotes if <code>true</code>
      * @param escapeForwardSlash TODO
@@ -164,7 +135,7 @@ public class StringEscapeUtils {
 
     /**
      * <p>Worker method for the {@link #escapeJavaScript(String)} method.</p>
-     * 
+     *
      * @param out write to receieve the escaped string
      * @param str String to escape values in, may be null
      * @param escapeSingleQuote escapes single quotes if <code>true</code>
@@ -172,7 +143,7 @@ public class StringEscapeUtils {
      * @throws IOException if an IOException occurs
      */
     private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote,
-            boolean escapeForwardSlash) throws IOException {
+                                              boolean escapeForwardSlash) throws IOException {
         if (out == null) {
             throw new IllegalArgumentException("The Writer must not be null");
         }
@@ -254,11 +225,101 @@ public class StringEscapeUtils {
     /**
      * <p>Returns an upper case hexadecimal <code>String</code> for the given
      * character.</p>
-     * 
+     *
      * @param ch The character to convert.
      * @return An upper case hexadecimal <code>String</code>
      */
     private static String hex(char ch) {
         return Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
+    }
+
+
+
+    /**
+     * Gets the contents of an <code>InputStream</code> as a list of Strings,
+     * one entry per line, using the specified character encoding.
+     * <p>
+     * Character encoding names can be found at
+     * <a href="http://www.iana.org/assignments/character-sets">IANA</a>.
+     * <p>
+     * This method buffers the input internally, so there is no need to use a
+     * <code>BufferedInputStream</code>.
+     *
+     * @param input the <code>InputStream</code> to read from, not null
+     * @param encoding the encoding to use, null means platform default
+     * @return the list of Strings, never null
+     * @throws NullPointerException                         if the input is null
+     * @throws IOException                                  if an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
+     *                                                      .UnsupportedEncodingException} in version 2.2 if the
+     *                                                      encoding is not supported.
+     * @since 1.1
+     */
+    public static List<String> readLines(final InputStream input, final String encoding) throws IOException {
+        return readLines(input, Charset.forName(encoding));
+    }
+    /**
+     * Gets the contents of an <code>InputStream</code> as a list of Strings,
+     * one entry per line, using the specified character encoding.
+     * <p>
+     * This method buffers the input internally, so there is no need to use a
+     * <code>BufferedInputStream</code>.
+     *
+     * @param input the <code>InputStream</code> to read from, not null
+     * @param encoding the encoding to use, null means platform default
+     * @return the list of Strings, never null
+     * @throws NullPointerException if the input is null
+     * @throws IOException          if an I/O error occurs
+     * @since 2.3
+     */
+    public static List<String> readLines(final InputStream input, final Charset encoding) throws IOException {
+        final InputStreamReader reader = new InputStreamReader(input, encoding);
+        return readLines(reader);
+    }
+
+    /**
+     * Gets the contents of a <code>Reader</code> as a list of Strings,
+     * one entry per line.
+     * <p>
+     * This method buffers the input internally, so there is no need to use a
+     * <code>BufferedReader</code>.
+     *
+     * @param input the <code>Reader</code> to read from, not null
+     * @return the list of Strings, never null
+     * @throws NullPointerException if the input is null
+     * @throws IOException          if an I/O error occurs
+     * @since 1.1
+     */
+    public static List<String> readLines(final Reader input) throws IOException {
+        final BufferedReader reader = toBufferedReader(input);
+        final List<String> list = new ArrayList<>();
+        String line = reader.readLine();
+        while (line != null) {
+            list.add(line);
+            line = reader.readLine();
+        }
+        return list;
+    }
+    /**
+     * Returns the given reader if it is a {@link BufferedReader}, otherwise creates a BufferedReader from the given
+     * reader.
+     *
+     * @param reader the reader to wrap or return (not null)
+     * @return the given reader or a new {@link BufferedReader} for the given reader
+     * @throws NullPointerException if the input parameter is null
+     * @since 2.2
+     */
+    public static BufferedReader toBufferedReader(final Reader reader) {
+        return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+    }
+
+    public static void closeQuietly(final Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (final IOException ioe) {
+            // ignore
+        }
     }
 }

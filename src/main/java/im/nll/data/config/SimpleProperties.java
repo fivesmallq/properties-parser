@@ -1,7 +1,5 @@
 package im.nll.data.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -14,7 +12,6 @@ import java.util.regex.Pattern;
  * @date 2019/4/18 10:38 AM
  */
 public class SimpleProperties {
-    private static Logger logger = LoggerFactory.getLogger(SimpleProperties.class);
     /**
      * The loaded configuration files
      */
@@ -35,7 +32,7 @@ public class SimpleProperties {
      */
     public static SimpleProperties readConfiguration(String filename) {
         SimpleProperties simpleProperties = new SimpleProperties();
-        simpleProperties.props=simpleProperties.readOneConfigurationFile(filename);
+        simpleProperties.props = simpleProperties.readOneConfigurationFile(filename);
         return simpleProperties;
     }
 
@@ -60,10 +57,10 @@ public class SimpleProperties {
         }
 
         try {
-            propsFromFile = IO.readUtf8Properties(is);
+            propsFromFile = readUtf8Properties(is);
         } catch (RuntimeException e) {
             if (e.getCause() instanceof IOException) {
-                logger.error("Cannot read " + filename);
+                System.err.println("Cannot read " + filename);
             }
         }
         confs.add(conf);
@@ -92,7 +89,7 @@ public class SimpleProperties {
                     r = System.getenv(jp);
                 }
                 if (r == null) {
-                    logger.warn("Cannot replace {} in configuration ({}={})", jp, key, value);
+                    System.err.println("Cannot replace " + jp + " in configuration (" + key + "=" + value + ")");
                     continue;
                 }
                 matcher.appendReplacement(newValue, r.replaceAll("\\\\", "\\\\\\\\"));
@@ -109,13 +106,30 @@ public class SimpleProperties {
                     String filenameToInclude = propsFromFile.getProperty(key.toString());
                     toInclude.putAll(readOneConfigurationFile(filenameToInclude));
                 } catch (Exception ex) {
-                    logger.warn("Missing include: {}", key, ex);
+                    System.err.println("Missing include: " + key);
                 }
             }
         }
         propsFromFile.putAll(toInclude);
-
         return propsFromFile;
+    }
+
+    /**
+     * Read a properties file with the utf-8 encoding
+     *
+     * @param is Stream to properties file
+     * @return The Properties object
+     */
+    public static Properties readUtf8Properties(InputStream is) {
+        Properties properties = new OrderSafeProperties();
+        try {
+            properties.load(is);
+            return properties;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            Helpers.closeQuietly(is);
+        }
     }
 
     /*
