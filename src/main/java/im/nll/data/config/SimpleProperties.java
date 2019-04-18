@@ -2,6 +2,7 @@ package im.nll.data.config;
 
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,7 +129,7 @@ public class SimpleProperties {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            Helpers.closeQuietly(is);
+            closeQuietly(is);
         }
     }
 
@@ -482,4 +483,256 @@ public class SimpleProperties {
 
         return group;
     }
+
+
+    /*
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *
+     * Help method.
+     *
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+
+    public static String escapeJava(String str) {
+        return escapeJavaStyleString(str, false, false);
+    }
+
+
+    private static String escapeJavaStyleString(String str, boolean escapeSingleQuotes, boolean escapeForwardSlash) {
+        if (str == null) {
+            return null;
+        }
+        try {
+            StringWriter writer = new StringWriter(str.length() * 2);
+            escapeJavaStyleString(writer, str, escapeSingleQuotes, escapeForwardSlash);
+            return writer.toString();
+        } catch (IOException ioe) {
+            // this should never ever happen while writing to a StringWriter
+            throw new RuntimeException(ioe);
+        }
+    }
+
+
+    private static void escapeJavaStyleString(Writer out, String str, boolean escapeSingleQuote,
+                                              boolean escapeForwardSlash) throws IOException {
+        if (out == null) {
+            throw new IllegalArgumentException("The Writer must not be null");
+        }
+        if (str == null) {
+            return;
+        }
+        int sz;
+        sz = str.length();
+        for (int i = 0; i < sz; i++) {
+            char ch = str.charAt(i);
+
+            // handle unicode
+            if (ch > 0xfff) {
+                out.write("\\u" + hex(ch));
+            } else if (ch > 0xff) {
+                out.write("\\u0" + hex(ch));
+            } else if (ch > 0x7f) {
+                out.write("\\u00" + hex(ch));
+            } else if (ch < 32) {
+                switch (ch) {
+                    case '\b':
+                        out.write('\\');
+                        out.write('b');
+                        break;
+                    case '\n':
+                        out.write('\\');
+                        out.write('n');
+                        break;
+                    case '\t':
+                        out.write('\\');
+                        out.write('t');
+                        break;
+                    case '\f':
+                        out.write('\\');
+                        out.write('f');
+                        break;
+                    case '\r':
+                        out.write('\\');
+                        out.write('r');
+                        break;
+                    default:
+                        if (ch > 0xf) {
+                            out.write("\\u00" + hex(ch));
+                        } else {
+                            out.write("\\u000" + hex(ch));
+                        }
+                        break;
+                }
+            } else {
+                switch (ch) {
+                    case '\'':
+                        if (escapeSingleQuote) {
+                            out.write('\\');
+                        }
+                        out.write('\'');
+                        break;
+                    case '"':
+                        out.write('\\');
+                        out.write('"');
+                        break;
+                    case '\\':
+                        out.write('\\');
+                        out.write('\\');
+                        break;
+                    case '/':
+                        if (escapeForwardSlash) {
+                            out.write('\\');
+                        }
+                        out.write('/');
+                        break;
+                    default:
+                        out.write(ch);
+                        break;
+                }
+            }
+        }
+    }
+
+    private static String hex(char ch) {
+        return Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
+    }
+
+    public static List<String> readLines(final InputStream input, final String encoding) throws IOException {
+        return readLines(input, Charset.forName(encoding));
+    }
+
+    public static List<String> readLines(final InputStream input, final Charset encoding) throws IOException {
+        final InputStreamReader reader = new InputStreamReader(input, encoding);
+        return readLines(reader);
+    }
+
+    public static List<String> readLines(final Reader input) throws IOException {
+        final BufferedReader reader = toBufferedReader(input);
+        final List<String> list = new ArrayList<>();
+        String line = reader.readLine();
+        while (line != null) {
+            list.add(line);
+            line = reader.readLine();
+        }
+        return list;
+    }
+
+    public static BufferedReader toBufferedReader(final Reader reader) {
+        return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+    }
+
+    public static void closeQuietly(final Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (final IOException ioe) {
+            // ignore
+        }
+    }
+
+    static class OrderSafeProperties extends java.util.Properties {
+
+        // set used to preserve key order
+        private final LinkedHashSet<Object> keys = new LinkedHashSet<>();
+
+        @Override
+        public void load(InputStream inputStream) throws IOException {
+
+            // read all lines from file as utf-8
+            List<String> lines = readLines(inputStream, "utf-8");
+            closeQuietly(inputStream);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            // escape "special-chars" (to utf-16 on the format \\uxxxx) in lines and store as iso-8859-1
+            // see info about escaping - http://download.oracle.com/javase/1.5.0/docs/api/java/util/Properties.html - "public void load(InputStream inStream)"
+            for (String line : lines) {
+
+                // due to "...by the rule above, single and double quote characters preceded
+                // by a backslash still yield single and double quote characters, respectively."
+                // we must transform \" => " and \' => ' before escaping to prevent escaping the backslash
+                line = line.replaceAll("\\\\\"", "\"").replaceAll("(^|[^\\\\])(\\\\')", "$1'");
+
+                String escapedLine = escapeJava(line) + "\n";
+                // remove escaped backslashes
+                escapedLine = escapedLine.replaceAll("\\\\\\\\", "\\\\");
+                out.write(escapedLine.getBytes("iso-8859-1"));
+            }
+
+            // read properties-file with regular java.util.Properties impl
+            super.load(new ByteArrayInputStream(out.toByteArray()));
+
+        }
+
+        @Override
+        public Enumeration<Object> keys() {
+            return Collections.<Object>enumeration(keys);
+        }
+
+        @Override
+        public Set<Object> keySet() {
+            return keys;
+        }
+
+        @Override
+        public Object put(Object key, Object value) {
+            keys.add(key);
+            return super.put(key, value);
+        }
+
+        @Override
+        public Object remove(Object o) {
+            keys.remove(o);
+            return super.remove(o);
+        }
+
+        @Override
+        public void clear() {
+            keys.clear();
+            super.clear();
+        }
+
+        @Override
+        public void putAll(Map<? extends Object, ? extends Object> map) {
+            keys.addAll(map.keySet());
+            super.putAll(map);
+        }
+
+        @Override
+        public Set<Map.Entry<Object, Object>> entrySet() {
+            Set<Map.Entry<Object, Object>> entrySet = new LinkedHashSet<>(keys.size());
+            for (Object key : keys) {
+                entrySet.add(new Entry(key, get(key)));
+            }
+
+            return entrySet;
+        }
+
+        class Entry implements Map.Entry<Object, Object> {
+            private final Object key;
+            private final Object value;
+
+            private Entry(Object key, Object value) {
+                this.key = key;
+                this.value = value;
+            }
+
+            @Override
+            public Object getKey() {
+                return key;
+            }
+
+            @Override
+            public Object getValue() {
+                return value;
+            }
+
+            @Override
+            public Object setValue(Object o) {
+                throw new IllegalStateException("not implemented");
+            }
+        }
+
+
+    }
 }
+
