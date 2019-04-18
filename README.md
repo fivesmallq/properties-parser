@@ -19,7 +19,7 @@ To add a dependency using Gradle:
 
 ```
 dependencies {
-  compile 'im.nll.data:extractor:0.9.0-SNAPSHOT'
+  compile 'im.nll.data:simple-properties:0.9.0-SNAPSHOT'
 }
 ```
 
