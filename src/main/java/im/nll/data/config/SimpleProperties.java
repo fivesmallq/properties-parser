@@ -52,7 +52,7 @@ public class SimpleProperties {
                 throw new RuntimeException(filename + " file load error", e);
             }
         } else {
-            is = PropertiesParser.class.getClassLoader().getResourceAsStream(
+            is = SimpleProperties.class.getClassLoader().getResourceAsStream(
                     filename);
         }
         if (confs.contains(conf)) {
