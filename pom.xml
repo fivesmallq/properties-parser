@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>im.nll.data</groupId>
-    <artifactId>simaple-properties</artifactId>
+    <artifactId>simple-properties</artifactId>
     <version>0.9.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
