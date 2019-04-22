@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
  * @date 2019/4/18 10:38 AM
  */
 public class SimpleProperties {
+    private static ClassLoader defaultClassLoader;
+
     /**
      * The loaded configuration files
      */
@@ -50,8 +52,11 @@ public class SimpleProperties {
                 throw new RuntimeException(filename + " file load error", e);
             }
         } else {
-            is = SimpleProperties.class.getClassLoader().getResourceAsStream(
-                    filename);
+            try {
+                is = getResourceAsStream(filename);
+            } catch (IOException e) {
+                System.err.println("Cannot read " + filename);
+            }
         }
         if (confs.contains(conf)) {
             throw new RuntimeException("Detected recursive @include usage. Have seen the file " + filename + " before");
@@ -59,7 +64,7 @@ public class SimpleProperties {
 
         try {
             propsFromFile = readUtf8Properties(is);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (e.getCause() instanceof IOException) {
                 System.err.println("Cannot read " + filename);
             }
@@ -107,7 +112,7 @@ public class SimpleProperties {
                     String filenameToInclude = propsFromFile.getProperty(key.toString());
                     toInclude.putAll(readOneConfigurationFile(filenameToInclude));
                 } catch (Exception ex) {
-                    System.err.println("Missing include: " + key + " Cause:" + ex.getMessage());
+                    System.err.println("Missing include: " + key + " Cause:" + ex);
                 }
             }
         }
@@ -628,6 +633,57 @@ public class SimpleProperties {
             }
         } catch (final IOException ioe) {
             // ignore
+        }
+    }
+    /*
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *
+     * Resource method.
+     *
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+
+    /**
+     * Returns a resource on the classpath as a Stream object
+     *
+     * @param resource The resource to find
+     * @return The resource
+     * @throws IOException If the resource cannot be found or read
+     */
+    public static InputStream getResourceAsStream(String resource)
+            throws IOException {
+        return getResourceAsStream(getClassLoader(), resource);
+    }
+
+    /**
+     * Returns a resource on the classpath as a Stream object
+     *
+     * @param loader   The classloader used to load the resource
+     * @param resource The resource to find
+     * @return The resource
+     * @throws IOException If the resource cannot be found or read
+     */
+    public static InputStream getResourceAsStream(ClassLoader loader,
+                                                  String resource) throws IOException {
+        InputStream in = null;
+        if (loader != null) {
+            in = loader.getResourceAsStream(resource);
+        }
+        if (in == null) {
+            in = ClassLoader.getSystemResourceAsStream(resource);
+        }
+        if (in == null) {
+            throw new IOException("Could not find resource " + resource);
+        }
+        return in;
+    }
+
+
+    private static ClassLoader getClassLoader() {
+        if (defaultClassLoader != null) {
+            return defaultClassLoader;
+        } else {
+            return Thread.currentThread().getContextClassLoader();
         }
     }
 

@@ -19,5 +19,6 @@ public class SimplePropertiesTest {
         Assert.assertEquals("https://github.com/fivesmallq/simple-properties", props.getStringProperty("base_url"));
         Assert.assertEquals("UTF-8", props.getStringProperty("MYSQL_CHARSET"));
         Assert.assertEquals("中文测试", props.getStringProperty("test.zh"));
+        Assert.assertEquals("defaultValue", props.getStringProperty("not_exist_key", "defaultValue"));
     }
 }
